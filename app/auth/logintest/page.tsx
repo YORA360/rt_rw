@@ -1,10 +1,8 @@
-"use client";
-
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api'; 
-import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,83 +62,51 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#eef1ff] px-4">
-      <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 border border-gray-200">
+    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Login</h1>
         
-        <h1 className="text-2xl font-bold text-center text-blue-700">
-          Sipakerte.id
-        </h1>
-        <p className="text-center text-gray-600 mt-1">Sistem Informasi RT/RW</p>
-
-        <h2 className="text-lg text-black text-center mt-3">
-          Masuk ke Akun Anda
-        </h2>
-        <p className="text-center text-gray-500 text-sm mt-1">
-          Masukkan email dan password untuk melanjutkan
-        </p>
-
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="mt-6 space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm text-black font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
-              type="email"
+              type="email" // Ubah jadi email agar validasi HTML jalan
               name="email"
-              className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
-              focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="nama@email.com"
               value={formData.email}
               onChange={handleChange}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
             />
           </div>
 
           <div>
-            <label className="text-black block text-sm font-medium mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700">Password</label>
             <input
               type="password"
               name="password"
-              className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
-              focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="••••••"
               value={formData.password}
               onChange={handleChange}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-black"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-black text-white py-2 rounded-lg mt-2 hover:bg-gray-800 transition font-medium"
+            className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white 
+              ${isLoading ? 'bg-blue-300' : 'bg-blue-600 hover:bg-blue-700'} 
+              transition-colors`}
           >
-            {isLoading ? "Memproses..." : "Masuk"}
+            {isLoading ? 'Loading...' : 'Sign In'}
           </button>
         </form>
-
-        <div className="border-t mt-6"></div>
-
-        <p className="text-center text-gray-600 text-sm mt-6">
-          Belum punya akun?{" "}
-          <Link href="/auth/register" className="text-blue-600 font-semibold hover:underline">
-            Daftar sekarang
-          </Link>
-        </p>
-
-        <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-gray-700">
-          <p className="font-semibold mb-2">Demo Akun:</p>
-          <p>
-            <span className="font-medium">Admin:</span> admin@rt05.id / admin123
-          </p>
-          <p className="mt-1">
-            <span className="font-medium">Warga:</span> ahmad.suhardi@email.com /
-            warga123
-          </p>
-        </div>
-
       </div>
     </div>
   );
