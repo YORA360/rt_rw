@@ -29,7 +29,7 @@ export default function LoginPage() {
 
     try {
       // 1. URL diganti ke '/login/' sesuai urls.py backend
-      const response = await api.post('/login/', {
+      const response = await api.post('/auth/login/', {
         email: formData.email,
         password: formData.password,
       });

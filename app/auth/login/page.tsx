@@ -30,20 +30,17 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1. URL diganti ke '/login/' sesuai urls.py backend
-      const response = await api.post('/login/', {
+      const response = await api.post('/auth/login/', {
         email: formData.email,
         password: formData.password,
       });
 
       console.log('Login Response:', response.data);
 
-      // 2. Knox mengembalikan object: { expiry: "...", token: "..." }
-      // Tidak ada access/refresh terpisah
       const { token } = response.data;
-      
-      // Simpan token
+
       localStorage.setItem('token', token);
+      console.log("Token from localStorage:", localStorage.getItem("token"));
 
       // Redirect
       router.push('/dashboard'); 
@@ -61,6 +58,7 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+    
   };
 
   return (
