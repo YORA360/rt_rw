@@ -43,7 +43,7 @@ export default function LoginPage() {
       console.log("Token from localStorage:", localStorage.getItem("token"));
 
       // Redirect
-      router.push('/dashboard'); 
+      router.push('/admin/dashboard'); 
       
     } catch (err: any) {
       console.error('Login Failed:', err);

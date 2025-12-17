@@ -1,56 +1,86 @@
-"use client"
+"use client";
 
-import SideBar from "@/components/sidebar"
-import {Users} from "lucide-react"
+import SideBar from "@/components/sidebar";
+import { Users, Calendar, Megaphone, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
+import { StatCard } from "@/components/statcard";
 
-export default function page() {
-    return(
-        <>
-        <div className="flex min-h-screen bg-[#F9FAFB]">
-            <SideBar/>
-            <div className="mx-5 my-5">
-                <h1 className="text-[18px]">Dashboard RT/RW</h1>
-                <p>Kelurahan jaya, kecamatan cihuy</p>
-                <div className="w-full grid grid-cols-4 space-between gap-8">
-                    <div className="border border-gray-300 rounded-xl bg-white flex items-center justify-center justify-between p-5 conten-between gap-5">
-                        <div>
-                        <p>Total Penduduk</p>
-                        <p>342</p>
-                        </div>
-                        <div className="flex items-center justify-center w-12 rounded-xl bg-blue-50">
-                        <Users className=" text-blue-500"></Users>
-                        </div>
-                    </div>
-                    <div className="border border-gray-300 rounded-xl bg-white flex items-center justify-center justify-between p-5 conten-between gap-5">
-                        <div>
-                        <p>Total Penduduk</p>
-                        <p>342</p>
-                        </div>
-                        <div className="flex items-center justify-center w-12 rounded-xl bg-blue-50">
-                        <Users className=" text-blue-500"></Users>
-                        </div>
-                    </div>
-                    <div className="border border-gray-300 rounded-xl bg-white flex items-center justify-center justify-between p-5 conten-between gap-5">
-                        <div>
-                        <p>Total Penduduk</p>
-                        <p>342</p>
-                        </div>
-                        <div className="flex items-center justify-center w-12 rounded-xl bg-blue-50">
-                        <Users className=" text-blue-500"></Users>
-                        </div>
-                    </div>
-                    <div className="border border-gray-300 rounded-xl bg-white flex items-center justify-center justify-between p-5 conten-between gap-5">
-                        <div>
-                        <p>Total Penduduk</p>
-                        <p>342</p>
-                        </div>
-                        <div className="flex items-center justify-center w-12 rounded-xl bg-blue-50 ">
-                        <Users className=" text-blue-500 text-xl"></Users>
-                        </div>
-                    </div>
-                </div>
-            </div>
+interface Penduduk {
+  id: number;
+  nik: string;
+  nama: string;
+  jenis_kelamin: "L" | "P";
+  alamat: string;
+  pekerjaan: string;
+  status: "KK" | "Anggota" | string;
+}
+
+export default function Page() {
+  const [penduduk, setPenduduk] = useState<Penduduk[]>([]);
+
+  useEffect(() => {
+    const fetchPenduduk = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/penduduk/", {
+          headers: {
+            Authorization: `Token ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Fetch gagal");
+        setPenduduk(await res.json());
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchPenduduk();
+  }, []);
+
+  return (
+    <div className="flex min-h-screen bg-[#F9FAFB]">
+      <SideBar />
+
+      <main className="flex-1 p-6">
+        <h1 className="text-lg font-semibold">Dashboard RT/RW</h1>
+        <p className="text-sm text-gray-500 mb-6">
+          Kelurahan Jaya, Kecamatan Cihuy
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          <StatCard
+            title="Total Penduduk"
+            value={penduduk.length}
+            icon={<Users className="text-blue-500 "  />}
+          />
+          <div>
+          <StatCard
+            title="Aktivitas Bulan Ini"
+            value={120}
+            bgColor="bg-green-50"
+            icon={<Calendar className="text-green-500 "  />}
+          />
+          </div>
+          <StatCard
+            title="Pengumuman Aktif"
+            value={180}
+            bgColor="bg-purple-50"
+            icon={<Megaphone className="text-purple-500" />}
+          />
+
+          <StatCard
+            
+            title="Iuran Terkumpul"
+            value={162}
+            bgColor="bg-orange-50"
+            icon={<Wallet className="text-orange-500" />}
+            
+          />
         </div>
-        </>
-    )
+      </main>
+    </div>
+  );
 }
