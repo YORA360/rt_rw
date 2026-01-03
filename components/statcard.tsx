@@ -5,14 +5,15 @@ interface StatCardProps {
     value:ReactNode;
     icon:ReactNode;
     bgColor?: string;
+    valueColor?: string;
 }
 
-export function StatCard({ title, value, icon,bgColor = "bg-blue-50" }: StatCardProps) {
+export function StatCard({ title, value, icon,bgColor, valueColor = "" }: StatCardProps) {
   return (
     <div className="border border-gray-300 rounded-xl bg-white flex items-center justify-between p-5">
       <div>
         <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-lg text-black ">{value}</p>
+        <p className={`text-lg text-black ${valueColor}`}>{value}</p>
       </div>
 
          <div

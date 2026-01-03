@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     nik: "",
     nama: "",
+    jenis_kelamin: "",
     alamat: "",
     email: "",
     password: "",
@@ -19,7 +20,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -41,6 +42,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           nik: formData.nik,
           nama: formData.nama,
+          jenis_kelamin: formData.jenis_kelamin,
           alamat: formData.alamat,
           email: formData.email,
           password: formData.password
@@ -110,6 +112,23 @@ export default function RegisterPage() {
                 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="Nama sesuai KTP"
               />
+            </div>
+            
+             <div>
+              <label className="block text-sm text-black font-medium mb-1">
+                Jenis Kelamin
+              </label>
+              <select
+                name="jenis_kelamin"
+                value={formData.jenis_kelamin}
+                onChange={handleChange}
+                className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
+                focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">-- Pilih Jenis Kelamin --</option>
+                <option value="L">Laki-laki</option>
+                <option value="P">Perempuan</option>        
+              </select>
             </div>
 
             <div>
