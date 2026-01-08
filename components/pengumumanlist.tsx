@@ -153,7 +153,7 @@ export default function PengumumanList() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-2xl shadow-sm text-black border border-gray-100">
+    <div className="w-full p-6 bg-white rounded-2xl shadow-sm text-black border border-gray-100">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
