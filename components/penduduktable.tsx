@@ -465,8 +465,23 @@ const verifyUser = async (id: number) => {
         </div>
 
         <div>
+          <p className="text-gray-500">Agama</p>
+          <p>{selectedPenduduk.agama}</p>
+        </div>
+
+        <div>
+          <p className="text-gray-500">Status Perkawinan</p>
+          <p>{selectedPenduduk.status_perkawin}</p>
+        </div>
+
+        <div>
           <p className="text-gray-500">Pekerjaan</p>
           <p>{selectedPenduduk.pekerjaan}</p>
+        </div>
+
+        <div>
+          <p className="text-gray-500">Kewarganegaraan</p>
+          <p>{selectedPenduduk.kewarganegaraan}</p>
         </div>
 
         <div className="col-span-2">
