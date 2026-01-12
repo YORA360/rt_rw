@@ -4,26 +4,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api'; 
 import Link from 'next/link';
+import Cookies from 'js-cookie';
 
 export default function LoginPage() {
   const router = useRouter();
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  // ... (bagian import tetap sama)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,47 +22,49 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // 1. Proses Login untuk mendapatkan Token
+      // 1. Login untuk ambil Token
       const response = await api.post('/auth/login/', {
         email: formData.email,
         password: formData.password,
       });
 
-      const { token } = response.data;
-      localStorage.setItem('token', token);
+      const token = response.data.token;
 
-      // 2. Ambil data profil menggunakan endpoint '/auth/me/' 
-      // JANGAN gunakan '/penduduk/{id}/' karena kita belum tahu ID-nya
+      // Simpan Token awal
+      localStorage.setItem('token', token);
+      Cookies.set('token', token, { expires: 7, path: '/' });
+
+      // 2. Ambil Profil Lengkap
       const profileRes = await api.get('/auth/me/', {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Token ${token}` }
       });
 
-      // Sesuaikan 'profileRes.data.penduduk' dengan struktur JSON dari backend Anda
-      const penduduk = profileRes.data.penduduk; 
+      const userProfile = profileRes.data;
+      const penduduk = userProfile.penduduk;
+
+      // Simpan Role ke Cookie (Penting untuk Middleware)
+      Cookies.set('role', userProfile.role, { expires: 7, path: '/' });
 
       if (!penduduk) {
-        setError("Data penduduk tidak ditemukan untuk akun ini.");
+        setError("Data penduduk tidak ditemukan.");
         return;
       }
 
-      // 3. Cek apakah data di tabel 'penduduk_penduduk' sudah lengkap
+      // 3. Cek Kelengkapan Data
       const isDataIncomplete = 
-        !penduduk.jenis_kelamin || 
-        !penduduk.ttl || 
-        !penduduk.agama || 
-        !penduduk.rt || 
-        !penduduk.rw || 
-        !penduduk.pekerjaan || 
-        !penduduk.status_perkawinan || 
-        !penduduk.no_telepon;
+        !penduduk.rt || !penduduk.rw || !penduduk.ttl || 
+        !penduduk.agama || !penduduk.status_perkawinan || !penduduk.no_telepon;
 
-      // 4. Redirect
+      // 4. Redirect Berdasarkan Kondisi & Role
       if (isDataIncomplete) {
-        // Arahkan ke form lengkapi data jika ada yang NULL
         router.push('/auth/complete-profile');
       } else {
-        // Arahkan ke dashboard jika sudah lengkap
-        router.push('/admin/dashboard');
+        // Logika Redirect sesuai ROLE
+        if (userProfile.role === 'WARGA') {
+          router.push('/user/dashboard');
+        } else {
+          router.push('/admin/dashboard');
+        }
       }
       
     } catch (err: any) {
@@ -87,39 +80,35 @@ export default function LoginPage() {
     }
   };
 
-// ... (sisa kode return JSX tetap sama)
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#eef1ff] px-4">
       <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 border border-gray-200">
         
-        <h1 className="text-2xl font-bold text-center text-blue-700">
-          Sipakerte.id
-        </h1>
-        <p className="text-center text-gray-600 mt-1">Sistem Informasi RT/RW</p>
+        <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-blue-700">Sipakerte.id</h1>
+            <p className="text-gray-500 text-sm">Sistem Informasi Manajemen RT/RW</p>
+        </div>
 
-        <h2 className="text-lg text-black text-center mt-3">
-          Masuk ke Akun Anda
-        </h2>
-        <p className="text-center text-gray-500 text-sm mt-1">
-          Masukkan email dan password untuk melanjutkan
-        </p>
+        <div className="mb-6">
+            <h2 className="text-lg font-semibold text-black">Masuk ke Akun</h2>
+            <p className="text-gray-400 text-xs">Gunakan email terdaftar untuk melanjutkan</p>
+        </div>
 
         {error && (
-          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded text-sm border border-red-200">
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-xs border border-red-100 animate-pulse">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="mt-6 space-y-4">
+        <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label className="block text-sm text-black font-medium mb-1">Email</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email</label>
             <input
               type="email"
               name="email"
               required
-              className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
-              focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full text-black px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
               placeholder="nama@email.com"
               value={formData.email}
               onChange={handleChange}
@@ -127,13 +116,12 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="text-black block text-sm font-medium mb-1">Password</label>
+            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
             <input
               type="password"
               name="password"
               required
-              className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
-              focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full text-black px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
               placeholder="••••••"
               value={formData.password}
               onChange={handleChange}
@@ -143,29 +131,23 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-black text-white py-2 rounded-lg mt-2 hover:bg-gray-800 transition font-medium disabled:bg-gray-400"
+            className="w-full bg-blue-600 text-white py-3 rounded-xl mt-4 hover:bg-blue-700 transition-all font-bold shadow-md disabled:bg-gray-300"
           >
-            {isLoading ? "Memproses..." : "Masuk"}
+            {isLoading ? "Memvalidasi..." : "Masuk Sekarang"}
           </button>
         </form>
 
-        <div className="border-t mt-6"></div>
-
-        <p className="text-center text-gray-600 text-sm mt-6">
-          Belum punya akun?{" "}
-          <Link href="/auth/register" className="text-blue-600 font-semibold hover:underline">
-            Daftar sekarang
-          </Link>
-        </p>
-
-        <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm text-gray-700">
-          <p className="font-semibold mb-2 text-blue-800">Demo Akun:</p>
-          <div className="space-y-1">
-            <p><span className="font-medium">Admin:</span> admin@rt05.id / admin123</p>
-            <p><span className="font-medium">Warga:</span> ahmad.suhardi@email.com / warga123</p>
-          </div>
+        <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t"></span></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Atau</span></div>
         </div>
 
+        <p className="text-center text-gray-500 text-sm">
+          Belum punya akun?{" "}
+          <Link href="/auth/register" className="text-blue-600 font-bold hover:underline">
+            Daftar Warga
+          </Link>
+        </p>
       </div>
     </div>
   );

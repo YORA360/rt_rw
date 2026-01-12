@@ -23,8 +23,27 @@ const PendudukTable: React.FC = () => {
 const [selectedPenduduk, setSelectedPenduduk] = useState<any>(null);
 const [unverifiedOpen, setUnverifiedOpen] = useState(false);
 const [unverifiedPenduduk, setUnverifiedPenduduk] = useState<Penduduk[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null); 
 
+    const checkUserRole = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
+      const res = await fetch("http://127.0.0.1:8000/api/auth/me/", {
+        headers: {
+          "Authorization": `Token ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUserRole(data.role); // Menyimpan 'WARGA', 'KETUA_RT', atau 'KETUA_RW'
+      }
+    } catch (err) {
+      console.error("Gagal mengambil role:", err);
+    }
+  };
   const [formData, setFormData] = useState(
     {
        nik  : "",
@@ -131,6 +150,7 @@ const verifyUser = async (id: number) => {
   useEffect(() => {
     getPenduduk();
     getUnverifiedPenduduk();
+    checkUserRole();
   }, []);
 
 
@@ -140,15 +160,17 @@ const verifyUser = async (id: number) => {
       <div className="flex items-center justify-between mb-4">
   <h2 className="text-lg font-semibold">Daftar Penduduk</h2>
 
-  <button
-    onClick={() => {
-      getUnverifiedPenduduk();
-      setUnverifiedOpen(true);
-    }}
-    className="px-3 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-  >
-    Belum Diverifikasi
-  </button>
+  {userRole !== "WARGA" && (
+          <button
+            onClick={() => {
+              getUnverifiedPenduduk();
+              setUnverifiedOpen(true);
+            }}
+            className="px-3 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
+          >
+            Belum Diverifikasi
+          </button>
+  )}
 </div>
 
 
@@ -167,12 +189,7 @@ const verifyUser = async (id: number) => {
             <Download size={18} /> Export
           </button>
 
-          <button
-            onClick={() => setPendudukForm(true)}
-             className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg"
-             >
-            <Plus size={18} /> Tambah Penduduk
-          </button>
+          
         </div>
       </div>
 
