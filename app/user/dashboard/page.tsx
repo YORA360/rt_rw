@@ -72,7 +72,9 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-[#F9FAFB]">
-      <SideBar />
+      <aside className="sticky top-0 h-screen">
+            <SideBar/>
+            </aside>
       
       <main className="flex-1 p-6 md:p-10">
         {/* Header Section */}

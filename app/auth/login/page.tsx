@@ -81,74 +81,85 @@ export default function LoginPage() {
   };
 
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-[#eef1ff] px-4">
+return (
+ <div className="min-h-screen flex items-center justify-center bg-[#eef1ff] px-4 font-sans">
       <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 border border-gray-200">
         
-        <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-700">Sipakerte.id</h1>
-            <p className="text-gray-500 text-sm">Sistem Informasi Manajemen RT/RW</p>
+        {/* Logo & Tagline */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl  text-center text-blue-700">
+            Sipakerte.id
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Sistem Informasi RT/RW
+          </p>
         </div>
 
-        <div className="mb-6">
-            <h2 className="text-lg font-semibold text-black">Masuk ke Akun</h2>
-            <p className="text-gray-400 text-xs">Gunakan email terdaftar untuk melanjutkan</p>
+        {/* Title Masuk */}
+        <div className="text-center mb-6">
+          <h2 className="text-lg  text-black">Masuk ke Akun Anda</h2>
+          <p className="text-gray-400 text-sm">
+            Masukkan email dan password untuk melanjutkan
+          </p>
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-xs border border-red-100 animate-pulse">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleLogin} className="space-y-5">
+          {error && (
+            <p className="text-red-600 bg-red-50 p-3 rounded-lg text-xs border border-red-100 italic">
+              {error}
+            </p>
+          )}
+
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Email</label>
+            <label className="block text-sm text-black font-medium mb-1">
+              Email
+            </label>
             <input
               type="email"
               name="email"
               required
-              className="w-full text-black px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
-              placeholder="nama@email.com"
               value={formData.email}
               onChange={handleChange}
+              className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
+                focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="nama@email.com"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
+            <label className="block text-sm font-bold text-black mb-1.5">
+              Password
+            </label>
             <input
               type="password"
               name="password"
               required
-              className="w-full text-black px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-400 outline-none transition-all"
-              placeholder="••••••"
               value={formData.password}
               onChange={handleChange}
+              className="w-full text-black px-3 py-2 rounded-lg bg-gray-100 border border-gray-300 
+                focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="........"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl mt-4 hover:bg-blue-700 transition-all font-bold shadow-md disabled:bg-gray-300"
+            className="w-full bg-[#050510] text-white py-3.5 rounded-xl mt-2 hover:bg-gray-900 transition-all font-bold text-sm"
           >
-            {isLoading ? "Memvalidasi..." : "Masuk Sekarang"}
+            {isLoading ? "Memproses..." : "Masuk"}
           </button>
         </form>
 
-        <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t"></span></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Atau</span></div>
-        </div>
-
+        
+        <div className="border-t border-gray-300 mt-6 mb-7"></div>
         <p className="text-center text-gray-500 text-sm">
           Belum punya akun?{" "}
           <Link href="/auth/register" className="text-blue-600 font-bold hover:underline">
-            Daftar Warga
+            Daftar sekarang
           </Link>
         </p>
       </div>
     </div>
-  );
+);
 }

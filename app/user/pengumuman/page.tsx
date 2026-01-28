@@ -47,14 +47,14 @@ export default function Page(){
 
     return(
 <div className="flex min-h-screen bg-[#F9FAFB]">
-     <aside className="sticky top-0 h-screen">
-           <SideBar/>
-           </aside>
+      <aside className="sticky top-0 h-screen">
+            <SideBar/>
+            </aside>
       <div className="flex-1 m-5">
         <div className=" my-5">
                 <h1 className="text-[18px] text-black">Dashboard RT/RW</h1>
                 <p className="text-gray-500">Kelurahan jaya, kecamatan cihuy</p>
-                <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   <div>
                     <StatCard
                      title="Total Aktivitas"

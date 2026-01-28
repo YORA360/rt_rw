@@ -71,10 +71,12 @@ export default function DashboardPage() {
   }, [getDashboardData]);
 
   return (
-    <div className="flex min-h-screen bg-[#F9FAFB]">
-      <SideBar />
+    <div className="flex  min-h-screen bg-[#F9FAFB]">
+      <aside className="sticky top-0 h-screen">
+            <SideBar/>
+            </aside>
       
-      <main className="flex-1 p-6 md:p-10">
+      <main className="flex-1 p-6 md:p-10 mt-[10%] md:mt-0">
         {/* Header Section */}
         <header className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Dashboard RT/RW</h1>
@@ -82,7 +84,7 @@ export default function DashboardPage() {
         </header>
 
         {/* Statistics Section */}
-        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        <section className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
           <StatCard
             title="Total Penduduk"
             value={stats.totalPenduduk}

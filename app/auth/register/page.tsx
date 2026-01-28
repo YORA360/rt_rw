@@ -215,7 +215,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="border-t mt-6"></div>
+          <div className="border-t border-gray-300 mt-6 mb-7"></div>
 
           <p className="text-center text-gray-600 text-sm mt-6">
             Sudah punya akun?{" "}

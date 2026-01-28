@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Eye, Edit3, Trash2, Plus, Download } from "lucide-react";
-
-
+import React, { useEffect, useState, useCallback } from "react";
+import { Eye, Edit3, Trash2, Download, X, Loader2 } from "lucide-react";
+import api from "@/lib/api";
 
 interface Penduduk {
   id: number;
@@ -12,522 +11,293 @@ interface Penduduk {
   jenis_kelamin: "L" | "P";
   alamat: string;
   pekerjaan: string;
-  status_keluarga: "KK" | "Anggota" | string;
+  status_keluarga: "KK" | "ANGGOTA";
+  ttl?: string;
+  agama?: string;
+  status_perkawinan: "KAWIN" | "BELUM_KAWIN | "CERAI";
+  kewarganegaraan: string;
+  no_telepon?: string;
+  rt?: string;
+  rw?: string;
 }
 
 const PendudukTable: React.FC = () => {
   const [penduduk, setPenduduk] = useState<Penduduk[]>([]);
+  const [unverifiedPenduduk, setUnverifiedPenduduk] = useState<Penduduk[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [pendudukForm, setPendudukForm] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // UI States
   const [detailOpen, setDetailOpen] = useState(false);
-const [selectedPenduduk, setSelectedPenduduk] = useState<any>(null);
-const [unverifiedOpen, setUnverifiedOpen] = useState(false);
-const [unverifiedPenduduk, setUnverifiedPenduduk] = useState<Penduduk[]>([]);
-  const [userRole, setUserRole] = useState<string | null>(null); 
+  const [unverifiedOpen, setUnverifiedOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedPenduduk, setSelectedPenduduk] = useState<Penduduk | null>(null);
 
-    const checkUserRole = async () => {
+  // Form State untuk Edit
+  const [formData, setFormData] = useState<Partial<Penduduk>>({});
+
+  const getPenduduk = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const res = await fetch("http://127.0.0.1:8000/api/auth/me/", {
-        headers: {
-          "Authorization": `Token ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setUserRole(data.role); // Menyimpan 'WARGA', 'KETUA_RT', atau 'KETUA_RW'
-      }
-    } catch (err) {
-      console.error("Gagal mengambil role:", err);
-    }
-  };
-  const [formData, setFormData] = useState(
-    {
-       nik  : "",
- nama : "",
- jenis_kelamin : "",
- ttl : "",
- agama : "",
- alamat : "",
- rt : "",
- rw : "",
- pekerjaan : "",
- status_perkawin: "",
- kewarganegaraan : "",
- no_telepon : "",
-    }
-  )
-
-  const getPenduduk = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.warn("Token tidak ada di localStorage!");
-        return;
-      }
-
-      const res = await fetch("http://127.0.0.1:8000/api/penduduk/", {
-        headers: {
-          "Authorization": `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Gagal mengambil data penduduk");
-      }
-
-      const data = await res.json();
-      setPenduduk(data);
-
+      const res = await api.get("/penduduk/");
+      setPenduduk(res.data);
     } catch (err) {
       console.error("Error fetching penduduk:", err);
     }
-  };
-  const getUnverifiedPenduduk = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    const res = await fetch("http://127.0.0.1:8000/api/auth/pending-user/", {
-      headers: {
-        Authorization: `Token ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!res.ok) throw new Error("Gagal mengambil data");
-
-    const data = await res.json();
-    setUnverifiedPenduduk(data);
-  } catch (error) {
-    console.error(error);
-  }
-};
-
-const verifyUser = async (id: number) => {
-  const token = localStorage.getItem("token");
-  if (!token) {
-    alert("Token tidak ditemukan, silakan login ulang");
-    return;
-  }
-
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/api/auth/verify-user/${id}/`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Token ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            action: "APPROVED"
-        })
-      }
-    );
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.message || "Gagal verifikasi");
-    }
-
-    // 🔄 refresh data
-    getPenduduk();
-    getUnverifiedPenduduk();
-
-    alert("Penduduk berhasil diverifikasi ✅");
-  } catch (error: any) {
-    alert(error.message || "Terjadi kesalahan");
-    console.error(error);
-  }
-};
-
-
-  useEffect(() => {
-    getPenduduk();
-    getUnverifiedPenduduk();
-    checkUserRole();
   }, []);
 
+  const getUnverifiedPenduduk = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/pending-user/");
+      setUnverifiedPenduduk(res.data);
+    } catch (err) {
+      console.error("Error fetching pending users:", err);
+    }
+  }, []);
 
+  const checkUserRole = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/me/");
+      setUserRole(res.data.role);
+    } catch (err) {
+      console.error("Gagal mengambil role:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkUserRole();
+    getPenduduk();
+    getUnverifiedPenduduk();
+  }, [checkUserRole, getPenduduk, getUnverifiedPenduduk]);
+
+  // Fungsi untuk membuka modal edit dan mengisi data awal
+  const handleOpenEdit = (p: Penduduk) => {
+    setSelectedPenduduk(p);
+    setFormData(p); // Isi form dengan data yang sudah ada
+    setEditOpen(true);
+    setDetailOpen(false); // Tutup detail jika sedang terbuka
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPenduduk) return;
+
+    setIsSubmitting(true);
+    try {
+      await api.patch(`/penduduk/${selectedPenduduk.id}/`, formData);
+      alert("Data penduduk berhasil diperbarui! ✅");
+      setEditOpen(false);
+      getPenduduk(); // Refresh data tabel
+    } catch (error: any) {
+      alert("Gagal memperbarui data: " + JSON.stringify(error.response?.data));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const verifyUser = async (id: number) => {
+    try {
+      await api.post(`/auth/verify-user/${id}/`, { action: "APPROVED" });
+      alert("Penduduk berhasil diverifikasi ✅");
+      getPenduduk();
+      getUnverifiedPenduduk();
+    } catch (error: any) {
+      alert(error.response?.data?.message || "Gagal verifikasi");
+    }
+  };
+
+  const filteredPenduduk = penduduk.filter((p) =>
+    [p.nik, p.nama, p.alamat].join(" ").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="w-full p-6 bg-white rounded-xl shadow text-black">
+      {/* Header & Search (Sama seperti sebelumnya) */}
       <div className="flex items-center justify-between mb-4">
-  <h2 className="text-lg font-semibold">Daftar Penduduk</h2>
-
-  {userRole !== "WARGA" && (
+        <h2 className="text-lg font-semibold">Daftar Penduduk</h2>
+        {userRole !== "WARGA" && (
           <button
-            onClick={() => {
-              getUnverifiedPenduduk();
-              setUnverifiedOpen(true);
-            }}
+            onClick={() => setUnverifiedOpen(true)}
             className="px-3 py-2 text-sm bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
           >
-            Belum Diverifikasi
+            Belum Diverifikasi ({unverifiedPenduduk.length})
           </button>
-  )}
-</div>
+        )}
+      </div>
 
-
-      {/* Search + Buttons */}
       <div className="flex items-center justify-between mb-6">
         <input
           type="text"
           placeholder="Cari berdasarkan nama, NIK, atau alamat..."
-          className="w-1/2 px-4 py-2 border rounded-lg"
+          className="w-1/2 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
-        <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 border rounded-lg">
-            <Download size={18} /> Export
-          </button>
-
-          
-        </div>
+        <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50">
+          <Download size={18} /> Export
+        </button>
       </div>
 
       {/* Table */}
-      <div className="overflow-auto">
-        <table className="w-full border-collapse">
+      <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg ">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-gray-100 text-left text-sm text-gray-700">
+            <tr className="bg-blue-400 text-left text-black font-semibold">
               <th className="p-3">NIK</th>
               <th className="p-3">Nama Lengkap</th>
               <th className="p-3">L/P</th>
               <th className="p-3">Alamat</th>
               <th className="p-3">Pekerjaan</th>
-              <th className="p-3">Status</th>
               <th className="p-3 text-center">Aksi</th>
             </tr>
           </thead>
-<tbody>
-  {penduduk
-    .filter((p) =>
-      [p.nik, p.nama, p.alamat]
-        .join(" ")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    )
-    .map((p) => (
-      <tr key={p.id} className="border-b hover:bg-gray-50 text-black">
-        <td className="p-3">{p.nik}</td>
-        <td className="p-3">{p.nama}</td>
-        <td className="p-3">{p.jenis_kelamin}</td>
-        <td className="p-3">{p.alamat}</td>
-        <td className="p-3">{p.pekerjaan}</td>
-        <td className="p-3">{p.status_keluarga}</td>
-
-        {/* Aksi */}
-        <td className="p-3">
-          <div className="flex items-center justify-center gap-3">
-           <button
-  onClick={() => {
-    setSelectedPenduduk(p);
-    setDetailOpen(true);
-  }}
-  className="text-blue-600 hover:text-blue-800"
->
-  <Eye size={18} />
-</button>
-
-
-            <button className="text-green-600 hover:text-green-800">
-              <Edit3 size={18} />
-            </button>
-
-            <button className="text-red-600 hover:text-red-800">
-              <Trash2 size={18} />
-            </button>
-          </div>
-        </td>
-      </tr>
-    ))}
-</tbody>
-{unverifiedOpen && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg">
-
-      {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">
-          Penduduk Belum Diverifikasi
-        </h3>
-        <button
-          onClick={() => setUnverifiedOpen(false)}
-          className="text-gray-400 hover:text-black"
-        >
-          ✕
-        </button>
+          <tbody>
+            {filteredPenduduk.map((p) => (
+              <tr key={p.id} className="border-b border-gray-300 hover:bg-gray-100 transition-colors">
+                <td className="p-3">{p.nik}</td>
+                <td className="p-3 font-medium">{p.nama}</td>
+                <td className="p-3 text-center">{p.jenis_kelamin}</td>
+                <td className="p-3">{p.alamat}</td>
+                <td className="p-3">{p.pekerjaan}</td>
+                <td className="p-3">
+                  <div className="flex items-center justify-center gap-3">
+                    <button onClick={() => { setSelectedPenduduk(p); setDetailOpen(true); }} className="text-blue-600 hover:text-blue-800"><Eye size={18} /></button>
+                    <button onClick={() => handleOpenEdit(p)} className="text-green-600 hover:text-green-800"><Edit3 size={18} /></button>
+                    <button className="text-red-600 hover:text-red-800"><Trash2 size={18} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Content */}
-      {unverifiedPenduduk.length === 0 ? (
-        <p className="text-sm text-gray-500">
-          Semua data penduduk sudah diverifikasi.
-        </p>
-      ) : (
-        <div className="space-y-3 max-h-96 overflow-auto">
-          {unverifiedPenduduk.map((p) => (
-            <div
-              key={p.id}
-              className="flex justify-between items-center border rounded-lg p-3"
-            >
-              <div>
-                <p className="font-semibold">{p.nama}</p>
-                <p className="text-sm text-gray-500">{p.nik}</p>
-                <p className="text-xs text-gray-400">{p.alamat}</p>
+      {/* --- MODAL: EDIT DATA (Style Baru) --- */}
+      {editOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto text-black">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold">Edit Data Penduduk</h3>
+              <button onClick={() => setEditOpen(false)}><X className="text-gray-400" /></button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">NIK (16 Digit)</label>
+                  <input required readOnly className="w-full rounded-xl border p-2.5 mt-1 bg-gray-50" value={formData.nik || ""} onChange={(e) => setFormData({ ...formData, nik: e.target.value })} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nama Lengkap</label>
+                  <input required className="w-full rounded-xl border p-2.5 mt-1" value={formData.nama || ""} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Jenis Kelamin</label>
+                  <select className="w-full rounded-xl border p-2.5 mt-1" value={formData.jenis_kelamin} onChange={(e) => setFormData({ ...formData, jenis_kelamin: e.target.value as any })}>
+                    <option value="L">Laki-laki</option>
+                    <option value="P">Perempuan</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Agama</label>
+                  <input className="w-full rounded-xl border p-2.5 mt-1" value={formData.agama || ""} onChange={(e) => setFormData({ ...formData, agama: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pekerjaan</label>
+                  <input className="w-full rounded-xl border p-2.5 mt-1" value={formData.pekerjaan || ""} onChange={(e) => setFormData({ ...formData, pekerjaan: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Status Perkawinan</label>
+                  <input className="w-full rounded-xl border p-2.5 mt-1" value={formData.status_perkawinan || ""} onChange={(e) => setFormData({ ...formData, status_perkawinan: e.target.value })} />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Alamat</label>
+                  <textarea rows={2} className="w-full rounded-xl border p-2.5 mt-1" value={formData.alamat || ""} onChange={(e) => setFormData({ ...formData, alamat: e.target.value })} />
+                </div>
               </div>
 
-              
-              <button
-  onClick={() => verifyUser(p.id)}
-  className="px-3 py-1 text-sm bg-black text-white rounded-lg hover:bg-gray-800"
->
-  Verifikasi
-</button>
-
-              
-            </div>
-          ))}
+              <div className="flex justify-end gap-3 pt-6 border-t">
+                <button type="button" onClick={() => setEditOpen(false)} className="px-6 py-2 text-sm font-bold border rounded-xl hover:bg-gray-50">Batal</button>
+                <button type="submit" disabled={isSubmitting} className="px-6 py-2 text-sm font-bold bg-black text-white rounded-xl hover:bg-gray-800 flex items-center gap-2">
+                  {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : "Simpan Perubahan"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* Footer */}
-      <div className="flex justify-end pt-4">
-        <button
-          onClick={() => setUnverifiedOpen(false)}
-          className="px-4 py-2 border rounded-lg"
-        >
-          Tutup
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      {/* --- MODAL: DETAIL --- */}
+      {detailOpen && selectedPenduduk && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 text-black">
+          <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-xl relative animate-in zoom-in duration-200">
+            <div className="flex justify-between items-start mb-6">
+              <h3 className="text-xl font-bold">Detail Data Penduduk</h3>
+              <button onClick={() => setDetailOpen(false)} className="text-gray-400 hover:text-black text-2xl">✕</button>
+            </div>
 
-{pendudukForm && (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white w-full max-w-lg rounded-xl p-6 shadow-lg">
-      <h3 className="text-lg font-semibold mb-4">Tambah Penduduk</h3>
+            <div className="flex items-center gap-4 mb-8 border-b pb-6">
+              <div className="w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-xl">
+                {selectedPenduduk.nama.charAt(0)}
+              </div>
+              <div>
+                <p className="font-bold text-lg">{selectedPenduduk.nama}</p>
+                <p className="text-sm text-gray-500">NIK: {selectedPenduduk.nik}</p>
+              </div>
+            </div>
 
-      <form className="space-y-4 text-black grid grid-cols-2 gap-x-4">
-        <label >NIK
-        <input
-          type="text"
-          placeholder="NIK"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-        <label htmlFor="">Nama Lengkap
-        <input
-          type="text"
-          placeholder="Nama Lengkap"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-        <label htmlFor="">Jenis Kelamin
-        <select className="w-full px-4 py-2 border rounded-lg">
-          <option value="">Jenis Kelamin</option>
-          <option value="L">Laki-laki</option>
-          <option value="P">Perempuan</option>
-        </select>
-        </label>
-        <label htmlFor="">Tempat Lahir
-        <input
-          type="text"
-          placeholder="Tempat Lahir"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-        <label htmlFor="">Tanggal Lahir
-        <input
-          type="date"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-        <label htmlFor="">Agama
-        <select className="w-full px-4 py-2 border rounded-lg">
-          <option value="">Islam</option>
-          <option value="">Kristen</option>
-          <option value="">Katolik</option>
-          <option value="">Hindu</option>
-          <option value="">Buddha</option>
-          <option value="">Konghucu</option>
-        </select>
-        </label>
+            <div className="grid grid-cols-2 gap-y-5 text-sm">
+              {[
+                { label: "Jenis Kelamin", value: selectedPenduduk.jenis_kelamin === "L" ? "Laki-laki" : "Perempuan" },
+                { label: "Agama", value: selectedPenduduk.agama },
+                { label: "Status Kawin", value: selectedPenduduk.status_perkawinan === "BELUM_KAWIN" ? "Belum Kawin"},
+                { label: "Pekerjaan", value: selectedPenduduk.pekerjaan },
+                { label: "Kewarganegaraan", value: selectedPenduduk.kewarganegaraan },
+                { label: "Status Keluarga", value: selectedPenduduk.status_keluarga },
+              ].map((item, idx) => (
+                <div key={idx}>
+                  <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">{item.label}</p>
+                  <p className="font-medium">{item.value || "-"}</p>
+                </div>
+              ))}
+              <div className="col-span-2">
+                <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">Alamat</p>
+                <p className="font-medium">{selectedPenduduk.alamat}</p>
+              </div>
+            </div>
 
-        <label className="col-span-2">Alamat Lengkap
-          <input
-          type="text"
-          placeholder="Alamat"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-
-        <label >RT
-        <input
-          type="text"
-          placeholder="NIK"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-
-        <label >RW
-        <input
-          type="text"
-          placeholder="NIK"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-
-        <label >Pekerjaan
-        <input
-          type="text"
-          placeholder="NIK"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-        
-        <label htmlFor="">Status Pernikahan
-        <select className="w-full px-4 py-2 border rounded-lg">
-          <option value="">Islam</option>
-          <option value="">Kristen</option>
-          <option value="">Katolik</option>
-          <option value="">Hindu</option>
-          <option value="">Buddha</option>
-          <option value="">Konghucu</option>
-        </select>
-        </label>
-
-        <label >Kewarganegaraan
-        <input
-          type="text"
-          placeholder="NIK"
-          className="w-full px-4 py-2 border rounded-lg"
-        />
-        </label>
-
-        <label htmlFor="">Agama
-        <select className="w-full px-4 py-2 border rounded-lg">
-          <option value="">Islam</option>
-          <option value="">Kristen</option>
-          <option value="">Katolik</option>
-          <option value="">Hindu</option>
-          <option value="">Buddha</option>
-          <option value="">Konghucu</option>
-        </select>
-        </label>
-        {/* Buttons */}
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            type="button"
-            onClick={() => setPendudukForm(false)}
-            className="px-4 py-2 border rounded-lg"
-          >
-            Batal
-          </button>
-
-          <button
-            type="submit"
-            className="px-4 py-2 bg-black text-white rounded-lg"
-          >
-            Simpan
-          </button>
+            <div className="flex justify-end gap-3 pt-8 mt-4 border-t">
+              <button onClick={() => setDetailOpen(false)} className="px-5 py-2 border rounded-lg text-sm font-medium">Tutup</button>
+              <button onClick={() => handleOpenEdit(selectedPenduduk)} className="px-5 py-2 bg-black text-white rounded-lg text-sm font-medium flex items-center gap-2">
+                <Edit3 size={16} /> Edit Data
+              </button>
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
- </div>
-)}
-{detailOpen && selectedPenduduk && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-lg relative">
+      )}
 
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-lg font-semibold">Detail Data Penduduk</h3>
-        <button
-          onClick={() => setDetailOpen(false)}
-          className="text-gray-400 hover:text-black"
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Profil */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-          {selectedPenduduk.nama.charAt(0)}
+      {/* --- MODAL: UNVERIFIED (Sama seperti sebelumnya) --- */}
+      {unverifiedOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 text-black">
+          <div className="bg-white w-full max-w-xl rounded-xl p-6 shadow-xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Penduduk Belum Diverifikasi</h3>
+              <button onClick={() => setUnverifiedOpen(false)}><X /></button>
+            </div>
+            <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+              {unverifiedPenduduk.map((p) => (
+                <div key={p.id} className="flex justify-between items-center border rounded-lg p-3 bg-gray-50">
+                  <div>
+                    <p className="font-semibold text-sm">{p.nama}</p>
+                    <p className="text-xs text-gray-500">{p.nik}</p>
+                  </div>
+                  <button onClick={() => verifyUser(p.id)} className="px-4 py-1.5 text-xs bg-black text-white rounded-md">Verifikasi</button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-        <div>
-          <p className="font-semibold">{selectedPenduduk.nama}</p>
-          <p className="text-sm text-gray-500">{selectedPenduduk.nik}</p>
-          <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded bg-black text-white">
-            {selectedPenduduk.status}
-          </span>
-        </div>
-      </div>
-
-      {/* Data */}
-      <div className="grid grid-cols-2 gap-y-4 text-sm">
-        <div>
-          <p className="text-gray-500">Jenis Kelamin</p>
-          <p>{selectedPenduduk.jenis_kelamin === "L" ? "Laki-laki" : "Perempuan"}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">Agama</p>
-          <p>{selectedPenduduk.agama}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">Status Perkawinan</p>
-          <p>{selectedPenduduk.status_perkawin}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">Pekerjaan</p>
-          <p>{selectedPenduduk.pekerjaan}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">Kewarganegaraan</p>
-          <p>{selectedPenduduk.kewarganegaraan}</p>
-        </div>
-
-        <div className="col-span-2">
-          <p className="text-gray-500">Alamat</p>
-          <p>{selectedPenduduk.alamat}</p>
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex justify-end gap-3 pt-6">
-        <button
-          onClick={() => setDetailOpen(false)}
-          className="px-4 py-2 border rounded-lg"
-        >
-          Tutup
-        </button>
-
-        <button className="px-4 py-2 bg-black text-white rounded-lg flex items-center gap-2">
-          <Edit3 size={16} /> Edit Data
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
-          
-
-        </table>
-      </div>
+      )}
     </div>
   );
 };
