@@ -23,7 +23,8 @@ export default function CompleteProfilePage() {
     pekerjaan: '',
     status_perkawinan: '',
     no_telepon: '',
-    kewarganegaraan: 'Indonesia'
+    kewarganegaraan: 'Indonesia',
+    status_tempat_tinggal: '',
   });
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export default function CompleteProfilePage() {
             status_perkawinan: d.status_perkawinan || '',
             no_telepon: d.no_telepon || '',
             kewarganegaraan: d.kewarganegaraan || 'Indonesia',
+            status_tempat_tinggal: d.status_tempat_tinggal || '',
           });
         }
       } catch (err) {
@@ -246,6 +248,23 @@ export default function CompleteProfilePage() {
               <option value="BELUM_KAWIN">Belum Kawin</option>
               <option value="KAWIN">Kawin</option>
               <option value="CERAI">Cerai</option>
+              
+            </select>
+          </div>
+           <div>
+            <label className="block text-sm font-medium text-gray-700">Status Tempat Tinggal</label>
+            <select 
+              name="status_tempat_tinggal" 
+              value={formData.status_tempat_tinggal} 
+              onChange={handleChange} 
+              required 
+              className="w-full px-3 py-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-400"
+            >
+              <option value="">Pilih Status</option>
+              <option value="PT">Penghuni Tetap</option>
+              <option value="KT">Kontrak</option>
+              <option value="KS">Kost</option>
+              <option value="TD">Tidak Ditinggali</option>
               
             </select>
           </div>

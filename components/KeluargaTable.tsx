@@ -20,6 +20,7 @@ const INITIAL_FORM = {
   status_perkawinan: 'BELUM_KAWIN',
   no_telepon: '',
   kewarganegaraan: 'Indonesia',
+  status_tempat_tinggal: '',
   foto: null as File | null,
 };
 
@@ -28,17 +29,18 @@ interface Penduduk {
   id: number;
   nik: string;
   nama: string;
-  jenis_kelamin: string;
+  jenis_kelamin: "L" | "P";
   ttl: string;
-  agama: string;
+  agama: "ISLAM" | "KRISTEN"| "KATOLIK" | "HINDU" | "BUDDHA" | "KONGHUCU" ;
   alamat: string;
   rt: string;
   rw: string;
   pekerjaan: string;
-  status_perkawinan: string;
+  status_perkawinan: "KAWIN" | "BELUM_KAWIN" | "CERAI";
+  status_tempat_tinggal: "PT" | "KT" | "KS" | "TD" ;
   kewarganegaraan: string;
   no_telepon: string;
-  status_keluarga: string;
+  status_keluarga: "KK" | "ANGGOTA";
   foto: string | null;
 }
 
@@ -61,8 +63,31 @@ const KeluargaTable: React.FC = () => {
   const [selectedPenduduk, setSelectedPenduduk] = useState<Penduduk | null>(null);
   const [openForm, setOpenForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editOpen, setEditOpen] = useState (false);
 
   const [formData, setFormData] = useState(INITIAL_FORM);
+
+const genderMap = { L: "Laki-Laki", P: "Perempuan"};
+  const statusperkawinanMap = {
+      BELUM_KAWIN: "Belum Kawin",
+      KAWIN: "Kawin",
+      CERAI: "Cerai",
+  };
+  const statusKeluargaMap = {KK: "Kepala Keluarga", ANGGOTA: "Anggota Keluarga"};
+  const agamaMap = {
+    ISLAM: "Islam",
+    KRISTEN: "Kristen",
+    KATOLIK: "Katolik",
+    HINDU: "Hindu",
+    BUDDHA:"Buddha",
+    KONGHUCU: "Konghucu"
+  }
+  const statusTempatTinggalMap = {
+    PT: "Penghuni Tetap",
+    KT: "Kontrak",
+    KS: "Kost",
+    TD: "Tidak Ditinggali"
+  }
 
   // --- Helper: Format Image URL ---
   const getImageUrl = (path: string | null, name: string) => {
@@ -72,6 +97,29 @@ const KeluargaTable: React.FC = () => {
   return `${BASE_URL}${cleanPath}`;
   };
 
+  const handleOpenEdit = (p: Penduduk) => {
+    setSelectedPenduduk(p);
+    setFormData(INITIAL_FORM); // Isi form dengan data yang sudah ada
+    setEditOpen(true);
+    setDetailOpen(false); // Tutup detail jika sedang terbuka
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPenduduk) return;
+
+    setIsSubmitting(true);
+    try {
+      await api.patch(`/penduduk/${selectedPenduduk.id}/`, formData);
+      alert("Data penduduk berhasil diperbarui! ✅");
+      setEditOpen(false);
+      getKeluargaSaya(); // Refresh data tabel
+    } catch (error: any) {
+      alert("Gagal memperbarui data: " + JSON.stringify(error.response?.data));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   // --- Actions ---
   const getKeluargaSaya = useCallback(async () => {
     try {
@@ -196,8 +244,7 @@ const KeluargaTable: React.FC = () => {
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-purple-50 text-left text-sm text-gray-700 font-bold border-b">
-              <th className="p-4 w-20 text-center">Foto</th>
-              <th className="p-4">Nama Lengkap</th>
+              <th className="p-4 ">Nama Lengkap</th>
               <th className="p-4">NIK</th>
               <th className="p-4 text-center">L/P</th>
               <th className="p-4">Hubungan</th>
@@ -209,9 +256,8 @@ const KeluargaTable: React.FC = () => {
               <tr><td colSpan={6} className="p-10 text-center text-gray-400">Memuat data...</td></tr>
             ) : filteredPenduduk.map((p) => (
               <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                <td className="p-4">
-                  <div className="flex justify-center">
-                    <img
+                
+                <td className="p-4 flex items-center gap-3 font-semibold text-gray-900"> <img
                       src={getImageUrl(p.foto, p.nama)}
                       className="w-12 h-12 rounded-full object-cover border shadow-sm"
                       alt="profile"
@@ -219,10 +265,7 @@ const KeluargaTable: React.FC = () => {
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${p.nama}&background=random`;
                       }}
-                    />
-                  </div>
-                </td>
-                <td className="p-4 font-semibold text-gray-900">{p.nama}</td>
+                    />{p.nama}</td>
                 <td className="p-4 text-gray-500 font-mono tracking-tight">{p.nik}</td>
                 <td className="p-4 text-center text-gray-600">{p.jenis_kelamin}</td>
                 <td className="p-4">
@@ -235,7 +278,7 @@ const KeluargaTable: React.FC = () => {
                 <td className="p-4">
                   <div className="flex justify-center gap-2">
                     <button onClick={() => { setSelectedPenduduk(p); setDetailOpen(true); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Eye size={18} /></button>
-                    <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"><Edit3 size={18} /></button>
+                    <button  onClick={() => handleOpenEdit(p)} className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"><Edit3 size={18} /></button>
                     <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={18} /></button>
                   </div>
                 </td>
@@ -337,37 +380,139 @@ const KeluargaTable: React.FC = () => {
           <div className="bg-white w-full max-w-md rounded-[2rem] p-8 shadow-2xl relative animate-in fade-in slide-in-from-bottom-4 duration-300">
             <button onClick={() => setDetailOpen(false)} className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full transition-colors"><X size={20} className="text-gray-400" /></button>
             
-            <div className="flex flex-col items-center mb-8">
+            <div className="flex  items-center gap-4 mb-6">
+              <div>
               <img 
                 src={getImageUrl(selectedPenduduk.foto, selectedPenduduk.nama)} 
-                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-2xl mb-4" 
+                className="w-22 h-22 rounded-full object-cover  shadow-2xl " 
                 alt="profile"
               />
-              <h2 className="text-2xl font-black text-gray-900 text-center leading-tight">{selectedPenduduk.nama}</h2>
-              <div className="mt-2 px-3 py-1 bg-purple-100 text-purple-700 text-[10px] font-black rounded-full uppercase tracking-widest">
-                 {selectedPenduduk.status_keluarga === 'KK' ? 'Kepala Keluarga' : 'Anggota Keluarga'}
+              </div>
+              <div className="flex flex-col gap-1">
+              <h3 className=" ">{selectedPenduduk.nama}</h3>
+              <h3 className="text-sm text-gray-700">{selectedPenduduk.nik}</h3>
+              <div
+                className={`px-2 py-1 text-[10px] font-black rounded-lg w-fit
+                  ${
+                    selectedPenduduk.status_keluarga === "KK"
+                      ? "bg-black text-white"
+                      : "bg-gray-300 text-gray-700"
+                  }
+                `}
+              >
+                {selectedPenduduk.status_keluarga}
+              </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-left">
-               <div className="p-4 bg-gray-50 rounded-2xl">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">NIK</p>
-                  <p className="text-xs font-bold text-gray-800 truncate">{selectedPenduduk.nik}</p>
-               </div>
-               <div className="p-4 bg-gray-50 rounded-2xl">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pekerjaan</p>
-                  <p className="text-xs font-bold text-gray-800">{selectedPenduduk.pekerjaan}</p>
-               </div>
-               <div className="col-span-2 p-4 bg-gray-50 rounded-2xl">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Alamat Domisili</p>
-                  <p className="text-xs font-medium leading-relaxed text-gray-700 italic">"{selectedPenduduk.alamat}"</p>
-               </div>
+            
+               
+               <div className="grid grid-cols-2 gap-y-5 text-sm">
+              {[
+                { label: "Jenis Kelamin", value: genderMap[selectedPenduduk.jenis_kelamin]},
+                { label: "Agama", value: agamaMap[selectedPenduduk.agama]},
+                { label: "Status Kawin",   value:statusperkawinanMap[selectedPenduduk.status_perkawinan]},
+                { label: "Pekerjaan", value: selectedPenduduk.pekerjaan },
+                { label: "Kewarganegaraan", value: selectedPenduduk.kewarganegaraan },
+                { label: "Status Keluarga", value: statusKeluargaMap[selectedPenduduk.status_keluarga]},
+                { label: "Status Tempat Tinggal", value: statusTempatTinggalMap[selectedPenduduk.status_tempat_tinggal]}
+
+              ].map((item, idx) => (
+                <div key={idx}>
+                  <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">{item.label}</p>
+                  <p className="font-medium">{item.value || "-"}</p>
+                </div>
+              ))}
+              <div className="col-span-2">
+                <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">Alamat</p>
+                <p className="font-medium">{selectedPenduduk.alamat}</p>
+              </div>
             </div>
+            
 
             <button onClick={() => setDetailOpen(false)} className="w-full mt-8 py-4 bg-black text-white rounded-2xl font-black shadow-xl hover:bg-gray-800 transition-all active:scale-95">Tutup</button>
           </div>
         </div>
       )}
+
+      {/* --- MODAL: EDIT DATA (Style Baru) --- */}
+            {editOpen && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto text-black">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold">Edit Data Penduduk</h3>
+                    <button onClick={() => setEditOpen(false)}><X className="text-gray-400" /></button>
+                  </div>
+      
+                  <form onSubmit={handleEditSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">NIK (16 Digit)</label>
+                        <input required readOnly className="w-full rounded-xl border p-2.5 mt-1 bg-gray-50" value={formData.nik || ""} onChange={(e) => setFormData({ ...formData, nik: e.target.value })} />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Nama Lengkap</label>
+                        <input required className="w-full rounded-xl border p-2.5 mt-1" value={formData.nama || ""} onChange={(e) => setFormData({ ...formData, nama: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Jenis Kelamin</label>
+                        <select className="w-full rounded-xl border p-2.5 mt-1" value={formData.jenis_kelamin} onChange={(e) => setFormData({ ...formData, jenis_kelamin: e.target.value as any })}>
+                          <option value="L">Laki-laki</option>
+                          <option value="P">Perempuan</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Agama</label>
+                        <select className="w-full rounded-xl border p-2.5 mt-1" value={formData.agama || ""} onChange={(e) => setFormData({ ...formData, agama: e.target.value as any})} >
+                          <option value="">Pilih Agama</option>
+                          <option value="ISLAM">Islam</option>
+                          <option value="KRISTEN">Kristen</option>
+                          <option value="KATOLIK">Katolik</option>
+                          <option value="HINDU">Hindu</option>
+                          <option value="BUDDHA">Buddha</option>
+                          <option value="KHONGHUCU">Khonghucu</option> 
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Pekerjaan</label>
+                        <input className="w-full rounded-xl border p-2.5 mt-1" value={formData.pekerjaan || ""} onChange={(e) => setFormData({ ...formData, pekerjaan: e.target.value })} />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Status Perkawinan</label>
+                        <select className="w-full rounded-xl border p-2.5 mt-1" value={formData.status_perkawinan || ""} onChange={(e) => setFormData({ ...formData, status_perkawinan: e.target.value as any})} >
+                          <option value="">Pilih Status</option>
+                          <option value="BELUM_KAWIN">Belum Kawin</option>
+                          <option value="KAWIN">Kawin</option>
+                          <option value="CERAI">Cerai</option>
+                        </select>
+                  
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Alamat</label>
+                        <textarea rows={2} className="w-full rounded-xl border p-2.5 mt-1" value={formData.alamat || ""} onChange={(e) => setFormData({ ...formData, alamat: e.target.value })} />
+                      </div>
+                      <div className="md:col-span-2">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Status Tempat Tinggal</label>
+                        <select className="w-full rounded-xl border p-2.5 mt-1" value={formData.status_tempat_tinggal || ""} onChange={(e) => setFormData({ ...formData, status_tempat_tinggal: e.target.value as any})} >
+                          <option value="">Pilih Status</option>
+                          <option value="PT">Penghuni Tetap</option>
+                          <option value="KT">Kontrak</option>
+                          <option value="KS">Kost</option>
+                          <option value="TD">Tidak Ditinggali</option>
+                        </select>
+                        </div>
+                    </div>
+      
+                    <div className="flex justify-end gap-3 pt-6 border-t">
+                      <button type="button" onClick={() => setEditOpen(false)} className="px-6 py-2 text-sm font-bold border rounded-xl hover:bg-gray-50">Batal</button>
+                      <button type="submit" disabled={isSubmitting} className="px-6 py-2 text-sm font-bold bg-black text-white rounded-xl hover:bg-gray-800 flex items-center gap-2">
+                        {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : "Simpan Perubahan"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
     </div>
   );
 };
