@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Megaphone, AlertCircle } from "lucide-react";
+import api from "@/lib/api"
 
 interface Pengumuman {
   id: number;
@@ -13,24 +14,24 @@ interface Pengumuman {
 export default function PengumumanTerbaru() {
   const [data, setData] = useState<Pengumuman[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pengumuman, setPengumuman] = useState<string | null>(null);
+
+  const getPengumuman = useCallback(async () =>{
+try{
+  setLoading(true);
+  const res = await api.get("/pengumuman/");
+  setData(res.data);
+} catch (err){
+  console.error("Fetch Error", err);
+}finally{
+  setLoading(false);
+}
+}, []);
+
+
 
   useEffect(() => {
-    const fetchPengumuman = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch("http://127.0.0.1:8000/api/pengumuman/", {
-          headers: { Authorization: `Token ${token}` },
-        });
-        const result = await res.json();
-        // Ambil 3 data terbaru saja
-        setData(result.slice(0, 3));
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPengumuman();
+  getPengumuman();  
   }, []);
 
   if (loading) return <div className="p-6 bg-white rounded-xl border animate-pulse h-64">Memuat pengumuman...</div>;

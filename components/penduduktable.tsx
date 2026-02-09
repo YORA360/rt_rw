@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { Eye, Edit3, Trash2, Download, X, Loader2 } from "lucide-react";
-import api from "@/lib/api";
+import api, {BASE_URL} from "@/lib/api";
 
 
-const BASE_URL = "http://127.0.0.1:8000"; 
+
 
 
 interface Penduduk {
@@ -13,18 +13,18 @@ interface Penduduk {
   nik: string;
   nama: string;
   jenis_kelamin: "L" | "P";
+  ttl: string;
+  agama: "ISLAM" | "KRISTEN"| "KATOLIK" | "HINDU" | "BUDDHA" | "KONGHUCU" ;
   alamat: string;
+  rt: string;
+  rw: string;
   pekerjaan: string;
-  status_keluarga: "KK" | "ANGGOTA";
-  ttl?: string;
-  agama:  "ISLAM" | "KRISTEN"| "KATOLIK" | "HINDU" | "BUDDHA" | "KONGHUCU" ;
   status_perkawinan: "KAWIN" | "BELUM_KAWIN" | "CERAI";
   status_tempat_tinggal: "PT" | "KT" | "KS" | "TD" ;
   kewarganegaraan: string;
-  no_telepon?: string;
-  foto: string;
-  rt?: string;
-  rw?: string;
+  no_telepon: string;
+  status_keluarga: "KK" | "ANGGOTA";
+  foto: string | null;
 }
 
 const PendudukTable: React.FC = () => {
