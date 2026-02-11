@@ -224,7 +224,7 @@ export default function PengumumanList() {
       </div>
 
       {/* List */}
-      <div className="grid gap-5 overflow-y-auto max-h-[500px] pr-2 scrollbar-thin scrollbar-thumb-gray-200">
+      <div className="grid gap-5 overflow-y-auto  pr-2 scrollbar-thin scrollbar-thumb-gray-200">
         {filteredData.length === 0 ? (
           <p className="text-center py-10 text-gray-400 italic font-medium">Belum ada pengumuman.</p>
         ) : (

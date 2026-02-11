@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Camera, Loader2, Image as ImageIcon } from "lucide-react";
+import api, {BASE_URL} from "@/lib/api"
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,6 +20,12 @@ export default function RegisterPage() {
     password2: "",
   });
 
+  // State khusus untuk file dan preview (seperti di Pengumuman)
+  const [fotoKK, setFotoKK] = useState<File | null>(null);
+  const [fotoKTP, setFotoKTP] = useState<File | null>(null);
+  const [previewKK, setPreviewKK] = useState<string | null>(null);
+  const [previewKTP, setPreviewKTP] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -25,7 +33,21 @@ export default function RegisterPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.FormEvent)  => {
+  // Handler File (Cara yang sama dengan Pengumuman)
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'kk' | 'ktp') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (type === 'kk') {
+        setFotoKK(file);
+        setPreviewKK(URL.createObjectURL(file));
+      } else {
+        setFotoKTP(file);
+        setPreviewKTP(URL.createObjectURL(file));
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
@@ -34,36 +56,58 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!fotoKK || !fotoKTP) {
+      setErrorMsg("Foto KK dan Foto KTP wajib diunggah");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/auth/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nik: formData.nik,
-          no_kk: formData.no_kk,
-          nama: formData.nama,
-          jenis_kelamin: formData.jenis_kelamin,
-          alamat: formData.alamat,
-          email: formData.email,
-          password: formData.password
-        }),
-      });
+  // 1. Siapkan FormData (Sudah benar)
+  const data = new FormData();
+  data.append("nik", formData.nik);
+  data.append("no_kk", formData.no_kk);
+  data.append("nama", formData.nama);
+  data.append("jenis_kelamin", formData.jenis_kelamin);
+  data.append("alamat", formData.alamat);
+  data.append("email", formData.email);
+  data.append("password", formData.password);
+  
+  if (fotoKK) data.append("foto_kk", fotoKK);
+  if (fotoKTP) data.append("foto_ktp", fotoKTP);
 
-      const data = await res.json();
+  // 2. Gunakan endpoint Register (BUKAN /pengumuman/)
+  // Jika menggunakan Axios (api), tidak perlu await res.json()
+  const res = await api.post("/auth/register/", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
-      if (!res.ok) {
-        setErrorMsg(data.detail || "Gagal membuat akun");
-      } else {
-        // Redirect setelah berhasil
-        router.push("/auth/login");
-      }
-    } catch (err) {
-      setErrorMsg("Terjadi kesalahan jaringan");
-    } finally {
-      setLoading(false);
-    }
+  // 3. Axios langsung mengembalikan data di properti .data
+  // Jika sampai sini, berarti status code 2xx (Berhasil)
+  router.push("/auth/login");
+
+} catch (err: any) {
+  // 4. Error Handling ala Axios
+  console.error("Register Error:", err);
+  
+  if (err.response) {
+    // Error dari server (misal: NIK sudah ada, email sudah ada)
+    const serverError = err.response.data;
+    
+    // Ambil pesan error detail jika ada, atau tampilkan pesan umum
+    const msg = serverError.detail || 
+                serverError.email?.[0] || 
+                serverError.nik?.[0] || 
+                "Gagal membuat akun. Periksa kembali data Anda.";
+                
+    setErrorMsg(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  } else {
+    setErrorMsg("Terjadi kesalahan jaringan atau server mati");
+  }
+} finally {
+  setLoading(false);
+}
   };
 
   return (
@@ -205,7 +249,49 @@ export default function RegisterPage() {
                 placeholder="Ulangi password"
               />
             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+          {/* Bagian Foto KK */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold flex items-center gap-2">
+              <ImageIcon size={16} /> Foto Kartu Keluarga (KK)
+            </label>
+            <div 
+              onClick={() => document.getElementById('inputKK')?.click()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 h-40 overflow-hidden"
+            >
+              {previewKK ? (
+                <img src={previewKK} alt="Preview KK" className="h-full w-full object-cover" />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <Camera size={32} className="mx-auto mb-2" />
+                  <p className="text-xs">Klik untuk upload Foto KK</p>
+                </div>
+              )}
+            </div>
+            <input id="inputKK" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'kk')} />
+          </div>
 
+          {/* Bagian Foto KTP */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold flex items-center gap-2">
+              <ImageIcon size={16} /> Foto KTP
+            </label>
+            <div 
+              onClick={() => document.getElementById('inputKTP')?.click()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 h-40 overflow-hidden"
+            >
+              {previewKTP ? (
+                <img src={previewKTP} alt="Preview KTP" className="h-full w-full object-cover" />
+              ) : (
+                <div className="text-center text-gray-400">
+                  <Camera size={32} className="mx-auto mb-2" />
+                  <p className="text-xs">Klik untuk upload Foto KTP</p>
+                </div>
+              )}
+            </div>
+            <input id="inputKTP" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'ktp')} />
+          </div>
+        </div>
             <button
               type="submit"
               disabled={loading}

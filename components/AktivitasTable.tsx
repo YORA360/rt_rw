@@ -71,10 +71,7 @@ export default function AktivitasList() {
 
 
   // --- API Helpers ---
-  const getHeaders = () => ({
-    "Authorization": `Token ${localStorage.getItem("token")}`,
-    "Content-Type": "application/json",
-  });
+
 
   const prepareFormData = (inputData: any) => {
   const data = new FormData();
@@ -244,7 +241,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       </div>
 
       {/* List Card */}
-      <div className="grid gap-4 overflow-x-auto overflow-y-auto max-h-[350px]  scrollbar-thin scrollbar-thumb-gray-300">
+      <div className="grid gap-4 overflow-x-auto overflow-y-auto   scrollbar-thin scrollbar-thumb-gray-300">
         {filteredData.length === 0 ? (
           <p className="text-center py-10 text-gray-400">Tidak ada aktivitas ditemukan.</p>
         ) : (
@@ -271,25 +268,25 @@ const handleSubmit = async (e: React.FormEvent) => {
                     <h2 className="text-lg font-bold text-gray-900">{item.judul}</h2>
                                             {/* Thumbnail Image / Icon */}
                     {item.foto && (
-  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100 flex items-center justify-center">
-    <img 
-      src={getImageUrl(item.foto, item.judul)} 
-      alt="thumb" 
-      className="w-full h-full object-cover"
-      onError={(e) => { 
-        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${item.judul}`; 
-      }}
-    />
-  </div>
-)}
-                    <p className="text-sm text-gray-600 line-clamp-2">{item.deskripsi}</p>
+                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-50 border border-gray-100 flex items-center justify-center">
+                        <img 
+                          src={getImageUrl(item.foto, item.judul)} 
+                          alt="thumb" 
+                          className="w-full h-full object-cover"
+                          onError={(e) => { 
+                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${item.judul}`; 
+                          }}
+                        />
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-600 line-clamp-1">{item.deskripsi}</p>
                     {/* Tombol Lihat Selengkapnya */}
-<button 
-  onClick={() => setSelectedDetail(item)}
-  className="text-blue-600 text-xs font-bold hover:underline mt-1 block"
->
-  Lihat Selengkapnya
-</button>
+                    <button 
+                      onClick={() => setSelectedDetail(item)}
+                      className="text-blue-600 text-xs font-bold hover:underline mt-1 block"
+                    >
+                      Lihat Selengkapnya
+                    </button>
                     <div className="flex flex-wrap gap-y-2 gap-x-5 text-[11px] font-medium text-gray-500">
                       <div className="flex items-center gap-1.5"><Calendar size={13}/> {item.tanggal}</div>
                       <div className="flex items-center gap-1.5"><Clock size={13}/> {item.jam}</div>

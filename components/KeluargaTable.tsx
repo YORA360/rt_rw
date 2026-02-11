@@ -40,6 +40,8 @@ const KeluargaTable: React.FC = () => {
   const [search, setSearch] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewKtp, setPreviewKtp] = useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Modal States
