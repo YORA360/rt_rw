@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import api from '@/lib/api'; 
 import Link from 'next/link';
 import Cookies from 'js-cookie';
@@ -11,7 +11,9 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const searchParams = useSearchParams();
+  
+  const isFromRegister = searchParams.get("status") === "check-email";
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -82,6 +84,7 @@ export default function LoginPage() {
 
 
 return (
+   
  <div className="min-h-screen flex items-center justify-center bg-[#eef1ff] px-4 font-sans">
       <div className="w-full max-w-md bg-white shadow-lg rounded-xl p-8 border border-gray-200">
         
@@ -102,7 +105,12 @@ return (
             Masukkan email dan password untuk melanjutkan
           </p>
         </div>
-
+        {/* Taruh banner ini di atas form login */}
+      {isFromRegister && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg px-4 py-3 mb-4 text-sm text-center">
+          📧 <strong>Registrasi berhasil!</strong> Silakan cek email kamu untuk verifikasi akun sebelum login.
+        </div>
+      )}
         <form onSubmit={handleLogin} className="space-y-5">
           {error && (
             <p className="text-red-600 bg-red-50 p-3 rounded-lg text-xs border border-red-100 italic">

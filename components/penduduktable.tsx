@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { Eye, Edit3, Trash2, Download, X, Loader2 } from "lucide-react";
+import { Eye, Edit3, Trash2, Download, X, Loader2, Camera } from "lucide-react";
 import api, {BASE_URL} from "@/lib/api";
 
 
@@ -25,6 +25,7 @@ interface Penduduk {
   no_telepon: string;
   status_keluarga: "KK" | "ANGGOTA";
   foto: string | null;
+  foto_ktp: string | null;
 }
 
 const PendudukTable: React.FC = () => {
@@ -38,6 +39,7 @@ const PendudukTable: React.FC = () => {
   const [unverifiedOpen, setUnverifiedOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openFotoKTP, setOpenFotoKTP] = useState(false);
   const [selectedPenduduk, setSelectedPenduduk] = useState<Penduduk | null>(null);
 
   // Form State untuk Edit
@@ -338,6 +340,28 @@ const PendudukTable: React.FC = () => {
                         <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">Alamat</p>
                         <p className="font-medium">{selectedPenduduk.alamat}</p>
                       </div>
+                      {selectedPenduduk.status_keluarga === "KK" && (
+                      <div className="col-span-2">
+                        <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-1">KTP</p>
+                        {selectedPenduduk.foto_ktp ? (
+                        <img 
+                          src={getImageUrl(selectedPenduduk.foto_ktp, "KTP")} 
+                          alt="Foto KK" 
+                          className="w-48 h-32 md:w-56 md:h-36 object-cover rounded-xl border-2 border-white shadow-md \
+                          hover:scale-105  transition-transform cursor-pointer"
+                          onClick={() => setOpenFotoKTP(true)}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://ui-avatars.com/api/?name=KK&background=6366f1&color=fff`;
+                          }}
+                        />
+                      ) : (
+                        <div className="w-48 h-32 bg-gray-200 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+                          <Camera className="text-gray-400" />
+                        </div>
+                      )}
+                      </div>
+                      )}
                     </div>
                     
         
@@ -350,7 +374,32 @@ const PendudukTable: React.FC = () => {
                   </div>
                 </div>
       )}
+      {openFotoKTP &&(
+      <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 "
+          onClick={() => setOpenFotoKTP(false)} // Klik di luar foto untuk menutup
+        >
+          <div className="relative max-w-4xl w-full flex flex-col items-center">
+            {/* Tombol Close */}
+            <button 
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-3xl font-bold"
+              onClick={() => setOpenFotoKTP(false)}
+            >
+              ✕
+            </button>
 
+            {/* Foto Besar */}
+            <img 
+              src={getImageUrl(selectedPenduduk.foto_ktp, "KTP")} 
+              alt="Foto KK Full"
+              className="max-h-[90vh] w-auto "
+              onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat foto diklik
+            />
+            
+            
+          </div>
+      </div>
+      )}
       {/* --- MODAL: UNVERIFIED (Sama seperti sebelumnya) --- */}
       {unverifiedOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 text-black">

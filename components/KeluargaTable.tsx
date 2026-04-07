@@ -24,6 +24,8 @@ interface Penduduk {
   no_telepon: string;
   status_keluarga: "KK" | "ANGGOTA";
   foto: string | null;
+  foto_ktp: string | null;
+  keluarga: Keluarga;
 }
 
 interface Keluarga {
@@ -33,6 +35,7 @@ interface Keluarga {
   alamat_kk: string;
   jumlah_anggota: number;
   penduduk: Penduduk[];
+  foto_kk: string | null;
 }
 
 const KeluargaTable: React.FC = () => {
@@ -41,6 +44,7 @@ const KeluargaTable: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewKtp, setPreviewKtp] = useState<string | null>(null);
+  const [openFotoKK, setOpenFotoKK] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,11 +66,27 @@ const [formData, setFormData] = useState<PendudukFormType>({});
   const statusTempatTinggalMap: any = { PT: "Penghuni Tetap", KT: "Kontrak", KS: "Kost", TD: "Tidak Ditinggali" };
 
   // --- Helpers ---
-  const getImageUrl = (path: string | null, name: string) => {
-    if (!path) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
-    if (path.startsWith('http')) return path;
-    return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
-  };
+const getImageUrl = (path: string | null, name: string = "User") => {
+  if (!path || path === "") {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+  }
+
+  // 2. Jika path sudah berupa URL lengkap (misal dari cloud storage)
+  if (path.startsWith('http')) return path;
+
+  // 3. Gabungkan BASE_URL dengan /media/ dan path dari database
+  // Kita paksa tambahkan /media karena di database Anda isinya: "kk/foto/xxx.jpg"
+  // sedangkan folder aslinya di: "media/kk/foto/xxx.jpg"
+  
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  
+  // Jika path belum mengandung /media, kita tambahkan
+  if (!cleanPath.startsWith('/media/')) {
+    return `${BASE_URL}/media${cleanPath}`;
+  }
+
+  return `${BASE_URL}${cleanPath}`;
+};
 
   const prepareFormData = (inputData: any) => {
     const data = new FormData();
@@ -126,6 +146,7 @@ const [formData, setFormData] = useState<PendudukFormType>({});
     setSelectedPenduduk(p);
     setFormData({ ...p, foto: null }); 
     setPreviewUrl(getImageUrl(p.foto, p.nama));
+    setPreviewKtp((p.foto_ktp))
     setEditOpen(true);
     setDetailOpen(false);
   };
@@ -160,21 +181,46 @@ const [formData, setFormData] = useState<PendudukFormType>({});
   return (
     <div className="w-full p-6 bg-white rounded-xl shadow text-black">
       {/* Header Info KK */}
-      {keluarga && (
-        <div className="mb-8 p-5 bg-gray-50 border border-gray-100 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 text-blue-600 rounded-lg"><MapPin size={24} /></div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">No. KK: {keluarga.no_kk}</h2>
-              <p className="text-sm text-gray-500">{keluarga.alamat_kk}</p>
-            </div>
+      {/* Header Info KK */}
+{keluarga && (
+  <div className="mb-8 p-6 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="flex flex-col md:flex-row items-center gap-6">
+      {/* Gambar KK */}
+      <div className="relative">
+        {keluarga.foto_kk ? (
+          <img 
+            src={getImageUrl(keluarga.foto_kk, "KK")} 
+            alt="Foto KK" 
+            className="w-48 h-32 md:w-56 md:h-36 object-cover rounded-xl border-2 border-white shadow-md \
+            hover:scale-105  transition-transform cursor-pointer"
+            onClick={() => setOpenFotoKK(true)}
+            onError={(e) => {
+               const target = e.target as HTMLImageElement;
+               target.src = `https://ui-avatars.com/api/?name=KK&background=6366f1&color=fff`;
+            }}
+          />
+        ) : (
+          <div className="w-48 h-32 bg-gray-200 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300">
+            <Camera className="text-gray-400" />
           </div>
-          <div className="bg-white px-5 py-3 rounded-xl shadow-sm border border-gray-100">
-            <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Kepala Keluarga</p>
-            <p className="font-bold text-gray-800 text-lg">{keluarga.kepala_keluarga}</p>
-          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <MapPin size={18} className="text-blue-600" />
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">No. KK: {keluarga.no_kk}</h2>
         </div>
-      )}
+        <p className="text-gray-500 font-medium">{keluarga.alamat_kk || "Alamat belum diisi"}</p>
+      </div>
+    </div>
+
+    <div className="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-100 min-w-[200px]">
+      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-widest mb-1">Kepala Keluarga</p>
+      <p className="font-bold text-gray-800 text-lg leading-tight">{keluarga.kepala_keluarga}</p>
+    </div>
+  </div>
+)}
 
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
@@ -330,6 +376,34 @@ const [formData, setFormData] = useState<PendudukFormType>({});
         </div>
       )}
 
+
+      {/* FotoKK */}
+      {openFotoKK &&(
+      <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 "
+          onClick={() => setOpenFotoKK(false)} // Klik di luar foto untuk menutup
+        >
+          <div className="relative max-w-4xl w-full flex flex-col items-center">
+            {/* Tombol Close */}
+            <button 
+              className="absolute -top-10 right-0 text-white hover:text-gray-300 text-3xl font-bold"
+              onClick={() => setOpenFotoKK(false)}
+            >
+              ✕
+            </button>
+
+            {/* Foto Besar */}
+            <img 
+              src={getImageUrl(keluarga.foto_kk, "KK")} 
+              alt="Foto KK Full"
+              className="max-h-[90vh] w-auto "
+              onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat foto diklik
+            />
+            
+            
+          </div>
+      </div>
+      )}
       {/* Detail Modal */}
       {detailOpen && selectedPenduduk && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm text-black">

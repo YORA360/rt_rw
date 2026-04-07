@@ -85,7 +85,7 @@ export default function RegisterPage() {
 
   // 3. Axios langsung mengembalikan data di properti .data
   // Jika sampai sini, berarti status code 2xx (Berhasil)
-  router.push("/auth/login");
+  router.push("/auth/login?status=check-email");
 
 } catch (err: any) {
   // 4. Error Handling ala Axios
@@ -252,8 +252,8 @@ export default function RegisterPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
           {/* Bagian Foto KK */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold flex items-center gap-2">
-              <ImageIcon size={16} /> Foto Kartu Keluarga (KK)
+            <label className="text-sm  text-black flex items-center gap-2">
+              <ImageIcon size={16} /> Foto KK
             </label>
             <div 
               onClick={() => document.getElementById('inputKK')?.click()}
@@ -273,7 +273,7 @@ export default function RegisterPage() {
 
           {/* Bagian Foto KTP */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold flex items-center gap-2">
+            <label className="text-sm text-black flex items-center gap-2">
               <ImageIcon size={16} /> Foto KTP
             </label>
             <div 
